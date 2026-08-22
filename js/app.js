@@ -214,7 +214,7 @@ const CapturePage = {
       Router.go("home");
     } catch (err) {
       console.error(err);
-      showToast("ذخیره فاکتور با خطا مواجه شد", "error");
+            showToast("خطا: " + (err?.message || JSON.stringify(err)), "error");
     } finally {
       setLoading(false);
     }

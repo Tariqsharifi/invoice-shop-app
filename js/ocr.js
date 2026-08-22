@@ -15,7 +15,6 @@ const OCR = {
         { body: { image_base64: base64 } }
       );
       if (error) throw error;
-      alert("OCR DEBUG: " + JSON.stringify(data).slice(0, 800));
       return this._normalizeOcrResponse(data);
     } catch (err) {
       console.warn("OCR ناموفق بود، حالت ورود دستی فعال شد:", err);
@@ -58,23 +57,81 @@ const OCR = {
     };
     const toEnglishDigits = (s) => s.replace(/[۰-۹٠-٩]/g, (d) => digitMap[d] ?? d);
 
-    const lines = text
+    // یکسان‌سازی اعداد و حذف جداکننده‌های هزارگان (چون فقط داخل قیمت‌ها استفاده میشن)
+    const normalized = toEnglishDigits(text).replace(/[,،]/g, "");
+
+    const lines = normalized
       .split("\n")
-      .map((l) => toEnglishDigits(l).trim())
+      .map((l) => l.trim())
       .filter(Boolean);
 
     const rows = [];
+
     for (const line of lines) {
-      const match = line.match(/^(.+?)\s+(\d+)\s+([\d,،]+)\s+([\d,،]+)$/);
-      if (match) {
-        rows.push({
-          name: match[1].trim(),
-          quantity: Number(match[2]),
-          unitPrice: Number(match[3].replace(/[,،]/g, "")),
-          totalPrice: Number(match[4].replace(/[,،]/g, "")),
-        });
+      // رد کردن خط تیتر و خط جداکننده (----)
+      if (/^-+(\s*\|\s*-+)*$/.test(line)) continue;
+      if (line.includes("نام کالا") || line.includes("مبلغ کل") || line.includes("ردیف")) continue;
+
+      // حذف نشانه‌های ردیف که OCR بهم چسبونده مثل n76 یا ن76
+      const cleaned = line.replace(/n(\d{2,3})/gi, " ").replace(/ن(\d{2,3})/g, " ");
+
+      const numberMatches = [...cleaned.matchAll(/\d+/g)];
+      if (numberMatches.length < 2) continue;
+
+      const numbers = numberMatches.map((m) => parseInt(m[0], 10)).filter((n) => n > 0);
+      if (numbers.length < 2) continue;
+
+      // پیدا کردن سه عددی که: تعداد × بهای واحد ≈ مبلغ کل
+      let best = null;
+      for (let i = 0; i < numbers.length; i++) {
+        for (let j = 0; j < numbers.length; j++) {
+          if (i === j) continue;
+          for (let k = 0; k < numbers.length; k++) {
+            if (k === i || k === j) continue;
+            const qty = numbers[i];
+            const unit = numbers[j];
+            const total = numbers[k];
+            if (unit < qty) continue; // فرض: بهای واحد از تعداد بزرگ‌تره
+            const expected = qty * unit;
+            const diff = Math.abs(expected - total) / total;
+            if (diff < 0.03 && (!best || diff < best.diff)) {
+              best = { qty, unit, total, diff };
+            }
+          }
+        }
       }
+
+      let quantity, unitPrice, totalPrice;
+      if (best) {
+        quantity = best.qty;
+        unitPrice = best.unit;
+        totalPrice = best.total;
+      } else {
+        // fallback: بزرگ‌ترین عدد = مبلغ کل، دومی = بهای واحد، کوچیک‌ترین = تعداد
+        const sorted = [...numbers].sort((a, b) => a - b);
+        totalPrice = sorted[sorted.length - 1] || 0;
+        unitPrice = sorted[sorted.length - 2] || 0;
+        quantity = sorted[0] || 1;
+        if (quantity === unitPrice || quantity === totalPrice) quantity = 1;
+      }
+
+      // استخراج نام کالا: حذف اعداد و جداکننده‌ها
+      const name = cleaned
+        .replace(/\d+/g, " ")
+        .replace(/[|\\/_-]+/g, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+
+      if (!name) continue;
+
+      rows.push({
+        name,
+        quantity,
+        unitPrice,
+        totalPrice: totalPrice || quantity * unitPrice,
+      });
     }
+
     return rows.length ? rows : [{ name: "", quantity: 1, unitPrice: 0, totalPrice: 0 }];
   },
 

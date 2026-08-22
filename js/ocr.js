@@ -57,71 +57,50 @@ const OCR = {
     };
     const toEnglishDigits = (s) => s.replace(/[۰-۹٠-٩]/g, (d) => digitMap[d] ?? d);
 
-    // یکسان‌سازی اعداد و حذف جداکننده‌های هزارگان (چون فقط داخل قیمت‌ها استفاده میشن)
-    const normalized = toEnglishDigits(text).replace(/[,،]/g, "");
+    const normalized = toEnglishDigits(text);
 
-    const lines = normalized
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
+    const rawLines = normalized.split("\n").map((l) => l.trim()).filter(Boolean);
+
+    // حذف خط تیتر و خط‌های جداکننده (----)
+    const lines = rawLines.filter((l) => {
+      if (/^\|?-+(\s*\|\s*-+)*\|?$/.test(l)) return false;
+      if (l.includes("نام کالا") || l.includes("مبلغ کل") || l.includes("ردیف")) return false;
+      return true;
+    });
+
+    const isPureNumber = (s) => /^[\d,.]+$/.test(s);
 
     const rows = [];
 
     for (const line of lines) {
-      // رد کردن خط تیتر و خط جداکننده (----)
-      if (/^-+(\s*\|\s*-+)*$/.test(line)) continue;
-      if (line.includes("نام کالا") || line.includes("مبلغ کل") || line.includes("ردیف")) continue;
+      const segments = line.split("|").map((s) => s.trim()).filter(Boolean);
+      if (!segments.length) continue;
 
-      // حذف نشانه‌های ردیف که OCR بهم چسبونده مثل n76 یا ن76
-      const cleaned = line.replace(/n(\d{2,3})/gi, " ").replace(/ن(\d{2,3})/g, " ");
-
-      const numberMatches = [...cleaned.matchAll(/\d+/g)];
-      if (numberMatches.length < 2) continue;
-
-      const numbers = numberMatches.map((m) => parseInt(m[0], 10)).filter((n) => n > 0);
-      if (numbers.length < 2) continue;
-
-      // پیدا کردن سه عددی که: تعداد × بهای واحد ≈ مبلغ کل
-      let best = null;
-      for (let i = 0; i < numbers.length; i++) {
-        for (let j = 0; j < numbers.length; j++) {
-          if (i === j) continue;
-          for (let k = 0; k < numbers.length; k++) {
-            if (k === i || k === j) continue;
-            const qty = numbers[i];
-            const unit = numbers[j];
-            const total = numbers[k];
-            if (unit < qty) continue; // فرض: بهای واحد از تعداد بزرگ‌تره
-            const expected = qty * unit;
-            const diff = Math.abs(expected - total) / total;
-            if (diff < 0.03 && (!best || diff < best.diff)) {
-              best = { qty, unit, total, diff };
-            }
-          }
+      const numericSegments = [];
+      const textSegments = [];
+      for (const seg of segments) {
+        if (isPureNumber(seg)) {
+          numericSegments.push(Number(seg.replace(/[,.]/g, "")));
+        } else {
+          textSegments.push(seg);
         }
       }
 
-      let quantity, unitPrice, totalPrice;
-      if (best) {
-        quantity = best.qty;
-        unitPrice = best.unit;
-        totalPrice = best.total;
-      } else {
-        // fallback: بزرگ‌ترین عدد = مبلغ کل، دومی = بهای واحد، کوچیک‌ترین = تعداد
-        const sorted = [...numbers].sort((a, b) => a - b);
-        totalPrice = sorted[sorted.length - 1] || 0;
-        unitPrice = sorted[sorted.length - 2] || 0;
-        quantity = sorted[0] || 1;
-        if (quantity === unitPrice || quantity === totalPrice) quantity = 1;
-      }
+      // حداقل باید ۳ ستون عددی مستقل (مبلغ کل، بهای واحد، تعداد) داشته باشیم
+      if (numericSegments.length < 3) continue;
+      // و حداقل یک بخش متنی برای اسم کالا
+      if (!textSegments.length) continue;
 
-      // استخراج نام کالا: حذف اعداد و جداکننده‌ها
-      const name = cleaned
-        .replace(/\d+/g, " ")
-        .replace(/[|\\/_-]+/g, " ")
-        .replace(/\s{2,}/g, " ")
-        .trim();
+      // ترتیب مشاهده‌شده در خروجی جدولی OCR.space:
+      // [مبلغ کل, بهای واحد, تعداد, بسته(اختیاری), ...]
+      const totalPrice = numericSegments[0];
+      const unitPrice = numericSegments[1];
+      const quantity = numericSegments[2];
 
+      if (!quantity || !unitPrice) continue;
+
+      // اسم کالا = طولانی‌ترین بخش متنی خط (برای حذف تکه‌های کوچیک اضافی)
+      const name = textSegments.sort((a, b) => b.length - a.length)[0];
       if (!name) continue;
 
       rows.push({

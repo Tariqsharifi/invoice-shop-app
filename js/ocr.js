@@ -69,19 +69,28 @@ const OCR = {
     return this._manualFallback();
   },
 
-  /** تلاش ساده برای استخراج ردیف از متن خام OCR (نام ... تعداد ... قیمت) */
-  _parseRawText(text) {
-    const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  /** تلاش ساده برای استخراج ردیف از متن خام OCR (
+_parseRawText(text) {
+    const digitMap = {
+      "۰":"0","۱":"1","۲":"2","۳":"3","۴":"4","۵":"5","۶":"6","۷":"7","۸":"8","۹":"9",
+      "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9",
+    };
+    const toEnglishDigits = (s) => s.replace(/[۰-۹٠-٩]/g, (d) => digitMap[d] ?? d);
+
+    const lines = text
+      .split("\n")
+      .map((l) => toEnglishDigits(l).trim())
+      .filter(Boolean);
+
     const rows = [];
-    const numPattern = /([\d,]+)\s*$/;
     for (const line of lines) {
-      const match = line.match(/^(.+?)\s+(\d+)\s+([\d,]+)\s+([\d,]+)$/);
+      const match = line.match(/^(.+?)\s+(\d+)\s+([\d,،]+)\s+([\d,،]+)$/);
       if (match) {
         rows.push({
           name: match[1].trim(),
           quantity: Number(match[2]),
-          unitPrice: Number(match[3].replace(/,/g, "")),
-          totalPrice: Number(match[4].replace(/,/g, "")),
+          unitPrice: Number(match[3].replace(/[,،]/g, "")),
+          totalPrice: Number(match[4].replace(/[,،]/g, "")),
         });
       }
     }

@@ -4,7 +4,7 @@
 // فایل‌های ثابت برنامه را کش می‌کند، نه پاسخ‌های API را.
 // =====================================================================
 
-const CACHE_NAME = "daftar-kharid-v2";
+const CACHE_NAME = "daftar-kharid-v3";
 const APP_SHELL = [
   "./",
   "./index.html",

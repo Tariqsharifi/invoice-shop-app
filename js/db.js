@@ -165,8 +165,21 @@ const DB = {
       .from("invoice-images")
       .createSignedUrl(path, 60 * 60); // یک ساعت اعتبار
     if (error) return null;
-    return data?.signedUrl ?? null;
+     return data?.signedUrl ?? null;
+  },
+
+  async deleteInvoice(invoiceId) {
+    const { error: purErr } = await client.from("purchases").delete().eq("invoice_id", invoiceId);
+    if (purErr) throw purErr;
+    const { error: invErr } = await client.from("invoices").delete().eq("id", invoiceId);
+    if (invErr) throw invErr;
+  },
+
+  async deleteProduct(productId) {
+    const { error: purErr } = await client.from("purchases").delete().eq("product_id", productId);
+    if (purErr) throw purErr;
+    const { error: prodErr } = await client.from("products").delete().eq("id", productId);
+    if (prodErr) throw prodErr;
   },
 };
-
 window.DB = DB;

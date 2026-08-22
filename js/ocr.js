@@ -154,8 +154,28 @@ const OCR = {
 
   _fileToBase64(file) {
     return new Promise((resolve, reject) => {
+      const img = new Image();
       const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result).split(",")[1]);
+      reader.onload = () => {
+        img.onload = () => {
+          const maxDim = 1800;
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            const ratio = Math.min(maxDim / width, maxDim / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          resolve(dataUrl.split(",")[1]);
+        };
+        img.onerror = reject;
+        img.src = String(reader.result);
+      };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });

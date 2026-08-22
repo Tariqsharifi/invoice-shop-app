@@ -19,7 +19,6 @@ const OCR = {
       return this._normalizeOcrResponse(data);
     } catch (err) {
       console.warn("OCR ناموفق بود، حالت ورود دستی فعال شد:", err);
-      alert("خطای OCR: " + (err?.message || JSON.stringify(err)));
       return this._manualFallback();
     }
   },
@@ -152,35 +151,11 @@ const OCR = {
     return rows.length ? rows : [{ name: "", quantity: 1, unitPrice: 0, totalPrice: 0 }];
   },
 
-  _fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
-      reader.onload = () => {
-        img.onload = () => {
-          const maxDim = 1800;
-          let { width, height } = img;
-          if (width > maxDim || height > maxDim) {
-            const ratio = Math.min(maxDim / width, maxDim / height);
-            width = Math.round(width * ratio);
-            height = Math.round(height * ratio);
-          }
-          const canvas = document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-          resolve(dataUrl.split(",")[1]);
-        };
-        img.onerror = reject;
-        img.src = String(reader.result);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  },
-};
+  /**
+   * جایگزین سمت‌کلاینت برای OCR: متنی که کاربر با Live Text آیفون از عکس
+   * فاکتور کپی کرده رو پردازش می‌کنه. هر خط را جدا بررسی می‌کند و همان
+   * منطق «تعداد × قیمت‌واحد ≈ مبلغ کل» را برای پیدا کردن ستون‌ها به‌کار می‌برد.
+   */
   parsePastedText(text) {
     const digitMap = {
       "۰":"0","۱":"1","۲":"2","۳":"3","۴":"4","۵":"5","۶":"6","۷":"7","۸":"8","۹":"9",
@@ -229,5 +204,35 @@ const OCR = {
 
     return rows.length ? rows : [{ name: "", quantity: 1, unitPrice: 0, totalPrice: 0 }];
   },
+
+  _fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = () => {
+        img.onload = () => {
+          const maxDim = 1800;
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            const ratio = Math.min(maxDim / width, maxDim / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          resolve(dataUrl.split(",")[1]);
+        };
+        img.onerror = reject;
+        img.src = String(reader.result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  },
+};
 
 window.OCR = OCR;

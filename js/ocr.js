@@ -181,5 +181,53 @@ const OCR = {
     });
   },
 };
+  parsePastedText(text) {
+    const digitMap = {
+      "۰":"0","۱":"1","۲":"2","۳":"3","۴":"4","۵":"5","۶":"6","۷":"7","۸":"8","۹":"9",
+      "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9",
+    };
+    const toEn = (s) => s.replace(/[۰-۹٠-٩]/g, (d) => digitMap[d] ?? d);
+    const lines = toEn(text).split("\n").map((l) => l.trim()).filter(Boolean);
+
+    const rows = [];
+    for (const line of lines) {
+      if (/نام کالا|مبلغ کل|بهای واحد|تعداد|بسته|ردیف|دیف/.test(line)) continue;
+      if (/^-+$/.test(line.replace(/\s/g, ""))) continue;
+
+      const numberMatches = [...line.matchAll(/[\d,،.]+/g)]
+        .map((m) => m[0])
+        .filter((s) => s.replace(/[,،.]/g, "").length > 0);
+      if (numberMatches.length < 2) continue;
+
+      const numbers = numberMatches.map((s) => Number(s.replace(/[,،.]/g, "")));
+
+      let name = line;
+      for (const s of numberMatches) name = name.split(s).join(" ");
+      name = name.replace(/[|]/g, " ").replace(/\s{2,}/g, " ").trim();
+      if (!name) continue;
+
+      let best = null;
+      for (let i = 0; i < numbers.length; i++) {
+        for (let j = 0; j < numbers.length; j++) {
+          if (i === j) continue;
+          for (let k = 0; k < numbers.length; k++) {
+            if (k === i || k === j) continue;
+            const qty = numbers[i], unit = numbers[j], total = numbers[k];
+            if (qty <= 0 || unit <= 0 || total <= 0) continue;
+            const diff = Math.abs(qty * unit - total) / total;
+            if (diff < 0.03) {
+              const score = diff + (qty > unit ? 1 : 0);
+              if (!best || score < best.score) best = { qty, unit, total, score };
+            }
+          }
+        }
+      }
+      if (!best) continue;
+
+      rows.push({ name, quantity: best.qty, unitPrice: best.unit, totalPrice: best.total });
+    }
+
+    return rows.length ? rows : [{ name: "", quantity: 1, unitPrice: 0, totalPrice: 0 }];
+  },
 
 window.OCR = OCR;

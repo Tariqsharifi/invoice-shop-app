@@ -27,8 +27,10 @@ const OCR = {
         window.APP_CONFIG.OCR_FUNCTION_NAME,
         { body: { image_base64: base64 } }
       );
-      if (error) throw error;
-      return this._normalizeOcrResponse(data);
+   if (error) throw error;
+alert("OCR DEBUG: " + JSON.stringify(data).slice(0, 800));
+return this._normalizeOcrResponse(data);
+
       } catch (err) {
       console.warn("OCR ناموفق بود، حالت ورود دستی فعال شد:", err);
       alert("خطای OCR: " + (err?.message || JSON.stringify(err)));

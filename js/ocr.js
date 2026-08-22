@@ -14,8 +14,7 @@ const OCR = {
         window.APP_CONFIG.OCR_FUNCTION_NAME,
         { body: { image_base64: base64 } }
       );
-  if (error) throw error;
-alert("OCR RAW: " + JSON.stringify(data.rawText || data).slice(0, 1200));
+      if (error) throw error;
       return this._normalizeOcrResponse(data);
     } catch (err) {
       console.warn("OCR ناموفق بود، حالت ورود دستی فعال شد:", err);
@@ -57,51 +56,88 @@ alert("OCR RAW: " + JSON.stringify(data.rawText || data).slice(0, 1200));
       "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9",
     };
     const toEnglishDigits = (s) => s.replace(/[۰-۹٠-٩]/g, (d) => digitMap[d] ?? d);
-
     const normalized = toEnglishDigits(text);
 
-    const rawLines = normalized.split("\n").map((l) => l.trim()).filter(Boolean);
+    // چون \n وسط یک ردیف واقعی هم می‌افتد، کل جدول را یکجا (بدون توجه به خط)
+    // بر اساس "|" می‌شکنیم — این از شکستن اشتباه ردیف‌ها جلوگیری می‌کند.
+    const flat = normalized.replace(/\n/g, " ");
+    const rawCells = flat.split("|").map((c) => c.trim());
 
-    // حذف خط تیتر و خط‌های جداکننده (----)
-    const lines = rawLines.filter((l) => {
-      if (/^\|?-+(\s*\|\s*-+)*\|?$/.test(l)) return false;
-      if (l.includes("نام کالا") || l.includes("مبلغ کل") || l.includes("ردیف")) return false;
-      return true;
-    });
+    const isSeparator = (c) => /^-+$/.test(c);
+    const isHeaderWord = (c) => /نام کالا|مبلغ کل|بهای واحد|تعداد|بسته|ردیف|دیف/.test(c);
+    const isPureNumber = (c) => /^[\d,.]+$/.test(c);
 
-    const isPureNumber = (s) => /^[\d,.]+$/.test(s);
+    const cells = rawCells.filter((c) => c && !isSeparator(c) && !isHeaderWord(c));
+
+    let expectedRowNum = null;
+    const items = [];
+    let currentNameParts = [];
+    let currentNumbers = [];
+
+    const flushItem = () => {
+      if (currentNameParts.length && currentNumbers.length >= 2) {
+        items.push({ name: currentNameParts.join(" ").trim(), numbers: currentNumbers.slice() });
+      }
+      currentNameParts = [];
+      currentNumbers = [];
+    };
+
+    for (const cell of cells) {
+      if (isPureNumber(cell)) {
+        const val = Number(cell.replace(/[,.]/g, ""));
+        // تشخیص ستون «ردیف»: اعداد کوچیک و متوالی (۷۶، ۷۷، ۷۸...) — این‌ها داده نیستن
+        const looksLikeRowIndex =
+          val > 0 && val < 1000 &&
+          (expectedRowNum === null ? val < 200 : val === expectedRowNum + 1);
+        if (looksLikeRowIndex) {
+          expectedRowNum = val;
+          continue; // رد کردن شماره ردیف
+        }
+        currentNumbers.push(val);
+      } else {
+        if (currentNumbers.length >= 2) flushItem();
+        currentNameParts.push(cell);
+      }
+    }
+    flushItem();
 
     const rows = [];
+    for (const item of items) {
+      const nums = item.numbers;
+      if (nums.length < 2) continue;
 
-    for (const line of lines) {
-      const segments = line.split("|").map((s) => s.trim()).filter(Boolean);
-      if (!segments.length) continue;
-
-      const numericSegments = [];
-      const textSegments = [];
-      for (const seg of segments) {
-        if (isPureNumber(seg)) {
-          numericSegments.push(Number(seg.replace(/[,.]/g, "")));
-        } else {
-          textSegments.push(seg);
+      // پیدا کردن سه عددی که: تعداد × بهای واحد ≈ مبلغ کل
+      let best = null;
+      for (let i = 0; i < nums.length; i++) {
+        for (let j = 0; j < nums.length; j++) {
+          if (i === j) continue;
+          for (let k = 0; k < nums.length; k++) {
+            if (k === i || k === j) continue;
+            const qty = nums[i], unit = nums[j], total = nums[k];
+            if (qty <= 0 || unit <= 0 || total <= 0) continue;
+            const expected = qty * unit;
+            const diff = Math.abs(expected - total) / total;
+            if (diff < 0.03 && (!best || diff < best.diff)) {
+              best = { qty, unit, total, diff };
+            }
+          }
         }
       }
 
-      // حداقل باید ۳ ستون عددی مستقل (مبلغ کل، بهای واحد، تعداد) داشته باشیم
-      if (numericSegments.length < 3) continue;
-      // و حداقل یک بخش متنی برای اسم کالا
-      if (!textSegments.length) continue;
+      let quantity, unitPrice, totalPrice;
+      if (best) {
+        quantity = best.qty;
+        unitPrice = best.unit;
+        totalPrice = best.total;
+      } else {
+        const sorted = [...nums].sort((a, b) => a - b);
+        totalPrice = sorted[sorted.length - 1] || 0;
+        unitPrice = sorted[sorted.length - 2] || 0;
+        quantity = sorted[0] || 1;
+        if (quantity === unitPrice) quantity = 1;
+      }
 
-      // ترتیب مشاهده‌شده در خروجی جدولی OCR.space:
-      // [مبلغ کل, بهای واحد, تعداد, بسته(اختیاری), ...]
-      const totalPrice = numericSegments[0];
-      const unitPrice = numericSegments[1];
-      const quantity = numericSegments[2];
-
-      if (!quantity || !unitPrice) continue;
-
-      // اسم کالا = طولانی‌ترین بخش متنی خط (برای حذف تکه‌های کوچیک اضافی)
-      const name = textSegments.sort((a, b) => b.length - a.length)[0];
+      const name = item.name.replace(/\s{2,}/g, " ").trim();
       if (!name) continue;
 
       rows.push({

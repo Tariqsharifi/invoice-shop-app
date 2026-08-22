@@ -29,10 +29,12 @@ const OCR = {
       );
       if (error) throw error;
       return this._normalizeOcrResponse(data);
-    } catch (err) {
+      } catch (err) {
       console.warn("OCR ناموفق بود، حالت ورود دستی فعال شد:", err);
+      alert("خطای OCR: " + (err?.message || JSON.stringify(err)));
       return this._manualFallback();
     }
+ 
   },
 
   _manualFallback() {

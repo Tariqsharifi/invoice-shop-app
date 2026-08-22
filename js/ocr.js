@@ -84,53 +84,34 @@ const OCR = {
 
   /**
    * منطق مشترک برای تبدیل یک آرایه از «سلول‌ها» (چه از پاره کردن خط با |،
-   * چه هر خط پیست‌شده) به ردیف‌های کالا. هر سلول یا عدد خالص هست یا بخشی
-   * از اسم کالا. کلمات هدر جدول فقط وقتی حذف می‌شن که کل سلول را تشکیل
-   * بدن (نه وقتی جزئی از یک اسم کالای واقعی‌ان، مثل «بسته ۲۸ تایی»).
+   * چه هر خط پیست‌شده) به ردیف‌های کالا. هر سلول یا عدد خالص هست، یا
+   * علامت مزاحم (٪ • - و امثالش) که نادیده گرفته می‌شه، یا بخشی از اسم کالا.
+   *
+   * فاکتورهای مختلف، ترتیب متفاوتی موقع کپی با Live Text تولید می‌کنن: بعضی‌ها
+   * اسم کالا رو قبل از عددها می‌ذارن، بعضی‌ها (مخصوصاً جدول‌های شبکه‌ای پرستون)
+   * عددها رو قبل از اسم کالا. چون از قبل نمی‌دونیم کدومه، هر دو حالت رو امتحان
+   * می‌کنیم و هر کدوم ردیف بیشتر و سالم‌تری داد، همون رو برمی‌گردونیم.
    */
   _extractRowsFromCells(rawCells) {
     const isSeparator = (c) => /^-+$/.test(c);
+    // علامت‌های خالص جدول (٪، •، خط تیره و ...) که نه عددن نه بخشی از اسم
+    const isNoiseSymbol = (c) => /^[%٪•·:><\-_.]+$/.test(c);
     const isHeaderWord = (c) => /^(نام کالا|مبلغ کل|بهای واحد|تعداد|بسته|ردیف|دیف)$/.test(c.trim());
-    const isPureNumber = (c) => /^[\d,،.]+$/.test(c);
+    const isPureNumber = (c) => /^[\d,،.]+$/.test(c) && /\d/.test(c);
     const toNumber = (c) => Number(c.replace(/[,،.]/g, ""));
 
-    const cells = rawCells.filter((c) => c && !isSeparator(c) && !isHeaderWord(c));
+    const cells = rawCells.filter(
+      (c) => c && !isSeparator(c) && !isNoiseSymbol(c) && !isHeaderWord(c)
+    );
 
-    let expectedRowNum = null;
-    const items = [];
-    let currentNameParts = [];
-    let currentNumbers = [];
-
-    const flushItem = () => {
-      if (currentNameParts.length && currentNumbers.length >= 2) {
-        items.push({ name: currentNameParts.join(" ").trim(), numbers: currentNumbers.slice() });
-      }
-      currentNameParts = [];
-      currentNumbers = [];
-    };
-
-    for (const cell of cells) {
-      if (isPureNumber(cell)) {
-        const val = toNumber(cell);
-        const looksLikeRowIndex =
-          val > 0 && val < 1000 &&
-          (expectedRowNum === null ? val < 200 : val === expectedRowNum + 1);
-        if (looksLikeRowIndex) {
-          expectedRowNum = val;
-          continue;
-        }
-        currentNumbers.push(val);
-      } else {
-        if (currentNumbers.length >= 2) flushItem();
-        currentNameParts.push(cell);
-      }
-    }
-    flushItem();
-
-    const rows = [];
-    for (const item of items) {
-      const nums = item.numbers;
-      if (nums.length < 2) continue;
+    // یک ردیف معمولاً حداکثر ۳ عدد داره (تعداد، قیمت واحد، مبلغ کل). اگه بیشتر
+    // از ۳ عدد پشت‌سرهم جمع بشه، عددهای اضافیِ ابتداییِ اضافه معمولاً باقی‌مونده‌ی
+    // یک ردیف ناقصِ قبلی هستن (که اسمش تو متن پیست‌شده نیومده) — پس فقط ۳ تای
+    // آخر رو نگه می‌داریم.
+    const finalizeRow = (rawName, numsFull) => {
+      const name = String(rawName || "").replace(/\s{2,}/g, " ").trim();
+      const nums = numsFull.slice(-3);
+      if (!name || nums.length < 2) return null;
 
       let best = null;
       for (let i = 0; i < nums.length; i++) {
@@ -161,11 +142,65 @@ const OCR = {
         if (quantity === unitPrice) quantity = 1;
       }
 
-      const name = item.name.replace(/\s{2,}/g, " ").trim();
-      if (!name) continue;
+      return { name, quantity, unitPrice, totalPrice: totalPrice || quantity * unitPrice };
+    };
 
-      rows.push({ name, quantity, unitPrice, totalPrice: totalPrice || quantity * unitPrice });
-    }
+    // حالت ۱: اسم کالا اول میاد، بعدش عددها (تا قبل از اسم کالای بعدی)
+    const groupNameFirst = () => {
+      let expectedRowNum = null;
+      const items = [];
+      let currentNameParts = [];
+      let currentNumbers = [];
+      const flushItem = () => {
+        if (currentNameParts.length && currentNumbers.length >= 2) {
+          items.push({ name: currentNameParts.join(" ").trim(), numbers: currentNumbers.slice() });
+        }
+        currentNameParts = [];
+        currentNumbers = [];
+      };
+      for (const cell of cells) {
+        if (isPureNumber(cell)) {
+          const val = toNumber(cell);
+          const looksLikeRowIndex =
+            val > 0 && val < 1000 &&
+            (expectedRowNum === null ? val < 200 : val === expectedRowNum + 1);
+          if (looksLikeRowIndex) {
+            expectedRowNum = val;
+            continue;
+          }
+          currentNumbers.push(val);
+        } else {
+          if (currentNumbers.length >= 2) flushItem();
+          currentNameParts.push(cell);
+        }
+      }
+      flushItem();
+      return items.map((item) => finalizeRow(item.name, item.numbers)).filter(Boolean);
+    };
+
+    // حالت ۲: عددها اول میان (تعداد/قیمت‌واحد/مبلغ‌کل)، بعدش اسم همون کالا
+    const groupNumbersFirst = () => {
+      const rows = [];
+      let numberBuffer = [];
+      for (const cell of cells) {
+        if (isPureNumber(cell)) {
+          numberBuffer.push(toNumber(cell));
+        } else {
+          if (numberBuffer.length >= 2) {
+            const row = finalizeRow(cell, numberBuffer);
+            if (row) rows.push(row);
+          }
+          numberBuffer = [];
+        }
+      }
+      return rows;
+    };
+
+    const rowsNameFirst = groupNameFirst();
+    const rowsNumbersFirst = groupNumbersFirst();
+    // هر کدوم ردیف بیشتری تولید کرد، یعنی احتمالاً کالاها را کمتر با هم قاطی
+    // کرده — همون رو انتخاب می‌کنیم.
+    const rows = rowsNumbersFirst.length > rowsNameFirst.length ? rowsNumbersFirst : rowsNameFirst;
 
     return rows.length ? rows : [{ name: "", quantity: 1, unitPrice: 0, totalPrice: 0 }];
   },

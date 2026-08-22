@@ -1,21 +1,8 @@
 // =====================================================================
 // ماژول OCR
-// این فایل هرگز مستقیم به یک سرویس OCR وصل نمی‌شود و هیچ API Key‌ای
-// اینجا نیست. تصویر را به یک Supabase Edge Function می‌فرستد؛ خود آن
-// تابع (که سمت سرور اجرا می‌شود) کلید سرویس OCR را در Secrets نگه
-// می‌دارد و درخواست واقعی را می‌زند. نمونه‌ی آن تابع را در
-// supabase/functions/ocr-invoice/index.ts ببین.
-//
-// اگر هنوز آن تابع را deploy نکرده‌ای (APP_CONFIG.OCR_MANUAL_FALLBACK = true)
-// یا تابع خطا داد، برنامه یک ردیف خالی برمی‌گرداند تا کاربر بتواند
-// دستی وارد کند — یعنی برنامه از همون روز اول، حتی بدون OCR واقعی، قابل استفاده است.
 // =====================================================================
 
 const OCR = {
-  /**
-   * file: تصویر فاکتور (از دوربین یا گالری)
-   * برمی‌گرداند: { supplierName, invoiceDate, rows: [{name, quantity, unitPrice, totalPrice}] }
-   */
   async extractInvoice(file) {
     if (window.APP_CONFIG.OCR_MANUAL_FALLBACK) {
       return this._manualFallback();
@@ -27,16 +14,14 @@ const OCR = {
         window.APP_CONFIG.OCR_FUNCTION_NAME,
         { body: { image_base64: base64 } }
       );
-   if (error) throw error;
-alert("OCR DEBUG: " + JSON.stringify(data).slice(0, 800));
-return this._normalizeOcrResponse(data);
-
-      } catch (err) {
+      if (error) throw error;
+      alert("OCR DEBUG: " + JSON.stringify(data).slice(0, 800));
+      return this._normalizeOcrResponse(data);
+    } catch (err) {
       console.warn("OCR ناموفق بود، حالت ورود دستی فعال شد:", err);
       alert("خطای OCR: " + (err?.message || JSON.stringify(err)));
       return this._manualFallback();
     }
- 
   },
 
   _manualFallback() {
@@ -47,11 +32,6 @@ return this._normalizeOcrResponse(data);
     };
   },
 
-  /**
-   * پاسخ خام Edge Function را به قالب استاندارد ردیف‌های قابل‌ویرایش تبدیل می‌کند.
-   * این تابع طوری نوشته شده که با هر ساختار خروجی OCR (متن خام یا JSON ساخت‌یافته)
-   * سازگار شود؛ فقط کافیست Edge Function داده‌اش را در یکی از این دو شکل بدهد.
-   */
   _normalizeOcrResponse(data) {
     if (data?.rows?.length) {
       return {
@@ -71,8 +51,7 @@ return this._normalizeOcrResponse(data);
     return this._manualFallback();
   },
 
-  /** تلاش ساده برای استخراج ردیف از متن خام OCR (
-_parseRawText(text) {
+  _parseRawText(text) {
     const digitMap = {
       "۰":"0","۱":"1","۲":"2","۳":"3","۴":"4","۵":"5","۶":"6","۷":"7","۸":"8","۹":"9",
       "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9",

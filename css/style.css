@@ -1,7 +1,11 @@
+/* اصلاح مهم: مطمئن میشود هر المنتی که جاوااسکریپت با hidden مخفی می‌کند
+   واقعاً مخفی بماند، حتی اگر کلاسش display:flex داشته باشد */
+[hidden] { display: none !important; }
+
 /* =====================================================================
    دفتر خرید مغازه — استایل
    ایده‌ی طراحی: حس یک دفتر حساب/دفترچه رسید — کاغذ کاهی، خط‌کشی دفتر،
-   و رنگ طلایی مهر برای قیمت‌ها. سریع، کم‌زرق‌وبرق، مناسب استفاده روزمره.
+   و رنگ طلایی مهر برای قیمت‌ها. سریع، کم‌زرقوبرق، مناسب استفاده روزمره.
    ===================================================================== */
 
 :root {
@@ -108,7 +112,6 @@ button, input, select {
 }
 
 .home-btn::after {
-  /* حس مهرِ گوشه‌ی صفحه دفتر */
   content: "";
   position: absolute;
   inset: 6px;
@@ -261,7 +264,6 @@ button, input, select {
   margin: 18px 0 8px;
 }
 
-/* جدول ردیف‌های کالا (به‌شکل کارت، نه جدول واقعی — راحت‌تر روی موبایل) */
 .item-row {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
@@ -551,6 +553,5 @@ button, input, select {
   .spinner { animation: none; }
 }
 
-/* اسکرول‌بار خیلی باریک روی حالت وب */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 3px; }

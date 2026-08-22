@@ -15,7 +15,7 @@ const OCR = {
         { body: { image_base64: base64 } }
       );
       if (error) throw error;
-alert("RAW>>>" + JSON.stringify(data.rawText || "") + "<<<RAW");
+alert("FULL DATA: " + JSON.stringify(data).slice(0, 1500));
       return this._normalizeOcrResponse(data);
     } catch (err) {
       console.warn("OCR ناموفق بود، حالت ورود دستی فعال شد:", err);

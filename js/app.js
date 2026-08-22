@@ -134,14 +134,16 @@ const CapturePage = {
     this.rows.splice(index, 1);
     this.renderRows();
   },
-
   updateRow(index, field, value) {
     const row = this.rows[index];
     row[field] = field === "name" ? value : Number(value) || 0;
     if (field === "quantity" || field === "unitPrice") {
       row.totalPrice = Math.round((Number(row.quantity) || 0) * (Number(row.unitPrice) || 0));
+      const totalInput = document.querySelector(
+        `#items-table [data-field="totalPrice"][data-index="${index}"]`
+      );
+      if (totalInput) totalInput.value = row.totalPrice;
     }
-    this.renderRows(index === this.rows.length - 1 ? null : undefined);
     this.updateTotal();
   },
 

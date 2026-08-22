@@ -1,39 +1,38 @@
-/* اصلاح مهم: مطمئن میشود هر المنتی که جاوااسکریپت با hidden مخفی می‌کند
-   واقعاً مخفی بماند، حتی اگر کلاسش display:flex داشته باشد */
 [hidden] { display: none !important; }
 
 /* =====================================================================
    دفتر خرید مغازه — استایل
-   ایده‌ی طراحی: حس یک دفتر حساب/دفترچه رسید — کاغذ کاهی، خط‌کشی دفتر،
-   و رنگ طلایی مهر برای قیمت‌ها. سریع، کم‌زرقوبرق، مناسب استفاده روزمره.
+   کانسپت: دفترچه رسید واقعی — کاغذ کاهی، لبه‌ی پرفراژ (سوراخ‌دار)،
+   و مهر طلایی گرد برای مبلغ‌ها.
    ===================================================================== */
 
 :root {
-  --color-bg: #efede3;
-  --color-surface: #ffffff;
-  --color-ink: #1c3438;
-  --color-ink-soft: #56686b;
+  --color-bg: #ece5d3;
+  --color-surface: #fffdf7;
+  --color-ink: #23322f;
+  --color-ink-soft: #66766e;
   --color-primary: #1f4b4e;
-  --color-primary-dark: #123032;
+  --color-primary-dark: #102b2d;
   --color-accent: #b8892f;
+  --color-accent-dark: #8c661f;
   --color-accent-soft: #f4e4c1;
   --color-success: #3f7a5c;
   --color-success-soft: #e1efe6;
   --color-danger: #b14a3d;
   --color-danger-soft: #f6e4e0;
-  --color-line: #d9d3c0;
+  --color-line: #d7cead;
 
   --radius-sm: 10px;
   --radius-md: 16px;
-  --radius-lg: 22px;
+  --radius-lg: 24px;
 
-  --shadow-card: 0 2px 10px rgba(28, 52, 56, 0.08);
-  --shadow-modal: 0 12px 40px rgba(18, 48, 50, 0.28);
+  --shadow-card: 0 3px 14px rgba(16, 43, 45, 0.09);
+  --shadow-modal: 0 14px 44px rgba(16, 43, 45, 0.32);
 
   color-scheme: light;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body {
   margin: 0;
@@ -42,18 +41,20 @@ html, body {
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: "Vazirmatn", "Tahoma", sans-serif;
-  -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: contain;
 }
 
+/* بافت ظریف کاغذ کاهی */
 body {
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+  background-image:
+    radial-gradient(rgba(31, 75, 78, 0.035) 1px, transparent 1px);
+  background-size: 14px 14px;
 }
 
-button, input, select {
-  font-family: inherit;
-}
+button, input, select, textarea { font-family: inherit; }
+input, select, textarea { font-size: 16px !important; }
 
 #app { min-height: 100%; }
 
@@ -61,25 +62,30 @@ button, input, select {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  animation: page-in 0.28s ease both;
 }
 
-.page-body {
-  padding: 16px 18px 32px;
-  flex: 1;
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .page { animation: none; }
+}
+
+.page-body { padding: 16px 18px 32px; flex: 1; }
 
 /* ---------------- صفحه اصلی ---------------- */
 
-.home-header {
-  padding: 30px 20px 10px;
-  text-align: center;
-}
+.home-header { padding: 34px 20px 8px; text-align: center; }
 
 .home-header h1 {
   margin: 0 0 6px;
-  font-size: 26px;
+  font-size: 27px;
   font-weight: 800;
   color: var(--color-primary-dark);
+  letter-spacing: -0.2px;
 }
 
 .home-header .subtitle {
@@ -93,7 +99,7 @@ button, input, select {
   grid-template-columns: 1fr 1fr;
   gap: 14px;
   padding: 18px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .home-btn {
@@ -108,20 +114,14 @@ button, input, select {
   box-shadow: var(--shadow-card);
   cursor: pointer;
   min-height: 118px;
-  position: relative;
-}
-
-.home-btn::after {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border: 1.5px dashed transparent;
-  border-radius: calc(var(--radius-lg) - 4px);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .home-btn:active {
+  transform: scale(0.96);
   background: var(--color-accent-soft);
   border-color: var(--color-accent);
+  box-shadow: none;
 }
 
 .home-btn-icon { font-size: 30px; line-height: 1; }
@@ -144,13 +144,10 @@ button, input, select {
   position: sticky;
   top: 0;
   z-index: 5;
+  box-shadow: 0 2px 10px rgba(16, 43, 45, 0.18);
 }
 
-.page-header h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
+.page-header h2 { margin: 0; font-size: 18px; font-weight: 700; }
 
 .back-btn {
   background: rgba(255, 255, 255, 0.14);
@@ -164,7 +161,9 @@ button, input, select {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background 0.12s ease;
 }
+.back-btn:active { background: rgba(255, 255, 255, 0.28); }
 
 /* ---------------- دکمه‌های عمومی ---------------- */
 
@@ -180,15 +179,14 @@ button, input, select {
   justify-content: center;
   gap: 8px;
   min-height: 50px;
+  transition: transform 0.1s ease, opacity 0.1s ease;
 }
+.btn:active { transform: scale(0.97); }
 
 .btn-full { width: 100%; }
 .btn-large { min-height: 58px; font-size: 16px; }
 
-.btn-primary {
-  background: var(--color-primary);
-  color: #fff;
-}
+.btn-primary { background: var(--color-primary); color: #fff; }
 .btn-primary:active { background: var(--color-primary-dark); }
 
 .btn-secondary {
@@ -198,16 +196,9 @@ button, input, select {
 }
 .btn-secondary:active { background: var(--color-accent-soft); }
 
-.btn-danger {
-  background: var(--color-danger-soft);
-  color: var(--color-danger);
-}
+.btn-danger { background: var(--color-danger-soft); color: var(--color-danger); }
 
-.btn-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 14px;
-}
+.btn-row { display: flex; gap: 10px; margin-top: 14px; }
 .btn-row .btn { flex: 1; }
 
 /* ---------------- ثبت فاکتور ---------------- */
@@ -224,20 +215,11 @@ button, input, select {
   margin-top: 12px;
 }
 
-.photo-placeholder {
-  text-align: center;
-  color: var(--color-ink-soft);
-  padding: 20px;
-}
+.photo-placeholder { text-align: center; color: var(--color-ink-soft); padding: 20px; }
 .photo-placeholder span { font-size: 40px; display: block; margin-bottom: 8px; }
 .photo-placeholder p { margin: 0; font-size: 14px; }
 
-.invoice-preview {
-  width: 100%;
-  max-height: 320px;
-  object-fit: contain;
-  display: block;
-}
+.invoice-preview { width: 100%; max-height: 320px; object-fit: contain; display: block; }
 
 .form-row { margin-top: 14px; }
 .form-row label {
@@ -253,16 +235,11 @@ button, input, select {
   padding: 12px 14px;
   border: 1.5px solid var(--color-line);
   border-radius: var(--radius-sm);
-  font-size: 15px;
   background: var(--color-surface);
   color: var(--color-ink);
 }
 
-.hint {
-  font-size: 13px;
-  color: var(--color-ink-soft);
-  margin: 18px 0 8px;
-}
+.hint { font-size: 13px; color: var(--color-ink-soft); margin: 18px 0 8px; }
 
 .item-row {
   background: var(--color-surface);
@@ -272,19 +249,13 @@ button, input, select {
   margin-bottom: 10px;
 }
 
-.item-row-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
+.item-row-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 
 .item-row input[type="text"] {
   flex: 1;
   border: 1.5px solid var(--color-line);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
-  font-size: 15px;
   font-weight: 600;
 }
 
@@ -299,42 +270,51 @@ button, input, select {
   flex-shrink: 0;
 }
 
-.item-row-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-}
-
+.item-row-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 .item-row-fields div { display: flex; flex-direction: column; gap: 4px; }
-
-.item-row-fields label {
-  font-size: 11px;
-  color: var(--color-ink-soft);
-}
-
+.item-row-fields label { font-size: 11px; color: var(--color-ink-soft); }
 .item-row-fields input {
   border: 1.5px solid var(--color-line);
   border-radius: var(--radius-sm);
   padding: 9px 8px;
-  font-size: 14px;
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
+/* --- مهر طلایی برای جمع کل (عنصر امضادار طراحی) --- */
 .total-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--color-accent-soft);
-  border: 1px solid var(--color-accent);
+  background: var(--color-primary-dark);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
-  margin: 18px 0;
+  padding: 14px 10px 14px 18px;
+  margin: 20px 0;
   font-size: 15px;
   font-weight: 700;
-  color: var(--color-primary-dark);
+  color: #fff;
 }
-.total-bar strong { font-variant-numeric: tabular-nums; color: var(--color-accent); font-size: 17px; }
+
+.total-bar span { padding-inline-start: 8px; }
+
+.total-bar strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary-dark);
+  font-size: 15px;
+  background: var(--color-accent);
+  border: 2px dashed rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  width: 86px;
+  height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.15;
+  flex-shrink: 0;
+  transform: rotate(-6deg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
 
 /* ---------------- جستجو ---------------- */
 
@@ -343,7 +323,6 @@ button, input, select {
   padding: 15px 16px;
   border: 1.5px solid var(--color-line);
   border-radius: var(--radius-md);
-  font-size: 16px;
   background: var(--color-surface);
   color: var(--color-ink);
   margin-top: 4px;
@@ -358,14 +337,11 @@ button, input, select {
   padding: 14px 16px;
   box-shadow: var(--shadow-card);
   cursor: pointer;
+  transition: transform 0.1s ease;
 }
+.result-card:active { transform: scale(0.98); }
 
-.result-card-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-primary-dark);
-  margin-bottom: 6px;
-}
+.result-card-title { font-size: 16px; font-weight: 700; color: var(--color-primary-dark); margin-bottom: 6px; }
 
 .result-card-meta {
   display: flex;
@@ -377,7 +353,7 @@ button, input, select {
 
 .price-pill {
   background: var(--color-accent-soft);
-  color: var(--color-accent);
+  color: var(--color-accent-dark);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   padding: 4px 10px;
@@ -385,18 +361,9 @@ button, input, select {
   font-size: 14px;
 }
 
-.empty-state {
-  text-align: center;
-  color: var(--color-ink-soft);
-  padding: 40px 20px;
-  font-size: 14px;
-}
+.empty-state { text-align: center; color: var(--color-ink-soft); padding: 40px 20px; font-size: 14px; }
 
-.history-list {
-  margin-top: 14px;
-  border-top: 1px dashed var(--color-line);
-  padding-top: 10px;
-}
+.history-list { margin-top: 14px; border-top: 1px dashed var(--color-line); padding-top: 10px; }
 
 .history-row {
   display: flex;
@@ -406,18 +373,11 @@ button, input, select {
   border-bottom: 1px solid var(--color-line);
 }
 .history-row:last-child { border-bottom: none; }
-.history-row .h-price { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--color-accent); }
+.history-row .h-price { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--color-accent-dark); }
 
 /* ---------------- کالاهای ثبت‌شده ---------------- */
 
-.sort-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  font-size: 13px;
-  color: var(--color-ink-soft);
-}
+.sort-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--color-ink-soft); }
 .sort-row select {
   flex: 1;
   padding: 9px 10px;
@@ -429,9 +389,9 @@ button, input, select {
 
 .product-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 
-/* ---------------- فاکتورها ---------------- */
+/* ---------------- فاکتورها — کارت با لبه‌ی پرفراژ ---------------- */
 
-.invoice-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.invoice-list { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
 
 .invoice-card {
   display: flex;
@@ -439,19 +399,28 @@ button, input, select {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
-  padding: 10px;
+  padding: 12px;
   box-shadow: var(--shadow-card);
   cursor: pointer;
+  position: relative;
+  transition: transform 0.1s ease;
+}
+.invoice-card:active { transform: scale(0.98); }
+
+/* لبه‌ی سوراخ‌دار شبیه دفترچه رسید */
+.invoice-card::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -1px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  background-image: radial-gradient(circle, var(--color-bg) 2px, transparent 2.2px);
+  background-size: 3px 10px;
+  background-repeat: repeat-y;
 }
 
-.invoice-card-thumb-wrap {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
-  flex-shrink: 0;
-}
-
+.invoice-card-thumb-wrap,
 .invoice-card-thumb {
   width: 64px;
   height: 64px;
@@ -465,14 +434,14 @@ button, input, select {
 .invoice-card-info .i-date { font-weight: 700; font-size: 14px; color: var(--color-primary-dark); }
 .invoice-card-info .i-supplier { font-size: 13px; color: var(--color-ink-soft); margin: 2px 0; }
 .invoice-card-info .i-meta { display: flex; justify-content: space-between; font-size: 13px; margin-top: 4px; }
-.invoice-card-info .i-total { font-weight: 800; color: var(--color-accent); font-variant-numeric: tabular-nums; }
+.invoice-card-info .i-total { font-weight: 800; color: var(--color-accent-dark); font-variant-numeric: tabular-nums; }
 
 /* ---------------- مودال ---------------- */
 
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(18, 48, 50, 0.45);
+  background: rgba(16, 43, 45, 0.48);
   display: flex;
   align-items: flex-end;
   z-index: 50;
@@ -483,10 +452,16 @@ button, input, select {
   width: 100%;
   max-height: 88dvh;
   overflow-y: auto;
-  border-radius: 22px 22px 0 0;
-  padding: 18px;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 18px;
   box-shadow: var(--shadow-modal);
   position: relative;
+  animation: modal-up 0.24s ease both;
+}
+
+@keyframes modal-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .modal-close {
@@ -500,13 +475,10 @@ button, input, select {
   background: var(--color-surface);
   color: var(--color-ink);
   font-size: 15px;
+  box-shadow: var(--shadow-card);
 }
 
-.modal-img {
-  width: 100%;
-  border-radius: var(--radius-md);
-  margin-bottom: 14px;
-}
+.modal-img { width: 100%; border-radius: var(--radius-md); margin-bottom: 14px; }
 
 /* ---------------- toast / loading ---------------- */
 
@@ -529,7 +501,7 @@ button, input, select {
 .loading-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(239, 237, 227, 0.92);
+  background: rgba(236, 229, 211, 0.94);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -555,6 +527,3 @@ button, input, select {
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 3px; }
-input, select, textarea {
-  font-size: 16px !important;
-}

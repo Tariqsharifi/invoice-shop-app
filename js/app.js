@@ -68,7 +68,7 @@ const CapturePage = {
     $("#btn-open-gallery").addEventListener("click", () => $("#gallery-input").click());
     $("#camera-input").addEventListener("change", (e) => this.onFileChosen(e));
     $("#gallery-input").addEventListener("change", (e) => this.onFileChosen(e));
-        $("#btn-process-ocr").addEventListener("click", () => this.processOcr());
+    $("#btn-process-ocr").addEventListener("click", () => this.processOcr());
     $("#btn-process-paste").addEventListener("click", () => this.processPastedText());
     $("#btn-add-row").addEventListener("click", () => this.addRow());
     $("#btn-save-invoice").addEventListener("click", () => this.saveInvoice());
@@ -85,6 +85,7 @@ const CapturePage = {
     $("#capture-step-review").hidden = true;
     $("#camera-input").value = "";
     $("#gallery-input").value = "";
+    $("#paste-text-input").value = "";
     $("#invoice-date-input").value = new Date().toISOString().slice(0, 10);
     $("#invoice-supplier-input").value = "";
   },
@@ -124,6 +125,21 @@ const CapturePage = {
     } finally {
       setLoading(false);
     }
+  },
+
+  processPastedText() {
+    const text = $("#paste-text-input").value;
+    if (!text.trim()) {
+      showToast("اول متن رو پیست کن", "error");
+      return;
+    }
+    const parsedRows = OCR.parsePastedText(text);
+    this.rows = parsedRows.length
+      ? parsedRows
+      : [{ name: "", quantity: 1, unitPrice: 0, totalPrice: 0 }];
+    this.renderRows();
+    $("#capture-step-photo").hidden = true;
+    $("#capture-step-review").hidden = false;
   },
 
   addRow() {
@@ -215,7 +231,7 @@ const CapturePage = {
       Router.go("home");
     } catch (err) {
       console.error(err);
-            showToast("خطا: " + (err?.message || JSON.stringify(err)), "error");
+      showToast("خطا: " + (err?.message || JSON.stringify(err)), "error");
     } finally {
       setLoading(false);
     }
@@ -332,7 +348,24 @@ const ProductDetail = {
                 <span class="h-price">${formatToman(h.unit_price)}</span>
               </div>`).join("")}
           </div>` : ""}
+        <button class="btn btn-danger btn-full" id="btn-delete-product" style="margin-top:14px;">🗑 حذف این کالا</button>
       `;
+      $("#btn-delete-product").addEventListener("click", async () => {
+        if (!confirm("مطمئنی می‌خوای این کالا و کل سابقه خریدش حذف بشه؟")) return;
+        setLoading(true, "در حال حذف…");
+        try {
+          await DB.deleteProduct(product.id);
+          $("#product-detail-modal").hidden = true;
+          showToast("کالا حذف شد", "success");
+          if (Router.current === "products") ProductsPage.onEnter();
+          if (Router.current === "search") SearchPage.runSearch($("#search-input").value);
+        } catch (err) {
+          console.error(err);
+          showToast("خطا در حذف کالا", "error");
+        } finally {
+          setLoading(false);
+        }
+      });
     } catch (err) {
       console.error(err);
       body.innerHTML = `<div class="empty-state">خطا در بارگذاری اطلاعات</div>`;
@@ -479,7 +512,23 @@ const InvoiceDetail = {
           <span>جمع کل فاکتور</span>
           <strong>${formatToman(invoice.total_amount)}</strong>
         </div>
+        <button class="btn btn-danger btn-full" id="btn-delete-invoice" style="margin-top:14px;">🗑 حذف این فاکتور</button>
       `;
+      $("#btn-delete-invoice").addEventListener("click", async () => {
+        if (!confirm("مطمئنی می‌خوای این فاکتور حذف بشه؟ این کار قابل بازگشت نیست.")) return;
+        setLoading(true, "در حال حذف…");
+        try {
+          await DB.deleteInvoice(invoiceId);
+          $("#invoice-detail-modal").hidden = true;
+          showToast("فاکتور حذف شد", "success");
+          InvoicesPage.onEnter();
+        } catch (err) {
+          console.error(err);
+          showToast("خطا در حذف فاکتور", "error");
+        } finally {
+          setLoading(false);
+        }
+      });
     } catch (err) {
       console.error(err);
       body.innerHTML = `<div class="empty-state">خطا در بارگذاری فاکتور</div>`;

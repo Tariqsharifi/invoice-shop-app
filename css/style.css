@@ -657,3 +657,64 @@ input, select, textarea { font-size: 16px !important; }
   padding: 8px 10px;
   font-size: 13px;
 }
+#products-list .result-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#products-list .result-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.select-checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--color-line);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+}
+
+.select-checkbox.checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.select-checkbox.checked::after {
+  content: "✓";
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.result-card-selected {
+  border-color: var(--color-primary);
+  background: var(--color-accent-soft);
+}
+
+.selection-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.selection-bar .btn {
+  flex: 1;
+}
+
+.btn-select-toggle {
+  border: 1.5px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-primary-dark);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}

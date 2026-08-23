@@ -582,3 +582,78 @@ input, select, textarea { font-size: 16px !important; }
   object-fit: contain;
   transition: transform 0.05s linear;
 }
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-row .hr-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-row .hr-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  border: none;
+  background: var(--color-accent-soft);
+  color: var(--color-primary-dark);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-btn-danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.item-edit-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 0;
+}
+
+.item-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.item-edit-field label {
+  font-size: 11px;
+  color: var(--color-ink-soft);
+}
+
+.item-edit-field input {
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  padding: 7px 8px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.item-edit-btns {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.item-edit-btns .btn {
+  min-height: 36px;
+  padding: 8px 10px;
+  font-size: 13px;
+}

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#173B3F" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="دفتر خرید" />
+<title>دفتر خرید مغازه</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ================= صفحه اصلی ================= -->
+  <section class="page" id="page-home" data-page="home">
+    <header class="home-header">
+      <h1>دفتر خرید مغازه</h1>
+      <p class="subtitle">فاکتور رو عکس بگیر، بعداً فقط اسم جنس رو جستجو کن</p>
+    </header>
+
+    <div class="home-grid">
+      <button class="home-btn" data-nav="capture">
+        <span class="home-btn-icon">📷</span>
+        <span class="home-btn-label">ثبت فاکتور</span>
+      </button>
+      <button class="home-btn" data-nav="search">
+        <span class="home-btn-icon">🔎</span>
+        <span class="home-btn-label">جستجوی کالا</span>
+      </button>
+      <button class="home-btn" data-nav="products">
+        <span class="home-btn-icon">📋</span>
+        <span class="home-btn-label">کالاهای ثبت‌شده</span>
+      </button>
+      <button class="home-btn" data-nav="invoices">
+        <span class="home-btn-icon">🧾</span>
+        <span class="home-btn-label">فاکتورهای قبلی</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ================= ثبت فاکتور ================= -->
+  <section class="page" id="page-capture" data-page="capture" hidden>
+    <header class="page-header">
+      <button class="back-btn" data-nav="home">→</button>
+      <h2>ثبت فاکتور</h2>
+    </header>
+
+    <div class="page-body">
+
+      <!-- مرحله ۱: گرفتن عکس -->
+      <div id="capture-step-photo" class="capture-step">
+        <div class="photo-picker">
+          <img id="invoice-preview-img" class="invoice-preview" hidden />
+          <div id="photo-placeholder" class="photo-placeholder">
+            <span>📷</span>
+            <p>عکس فاکتور رو بگیر یا از گالری انتخاب کن</p>
+          </div>
+        </div>
+
+        <input type="file" id="camera-input" accept="image/*" capture="environment" hidden />
+        <input type="file" id="gallery-input" accept="image/*" hidden />
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-open-camera">📷 گرفتن عکس</button>
+          <button class="btn btn-secondary" id="btn-open-gallery">🖼️ انتخاب از گالری</button>
+        </div>
+        <button class="btn btn-primary btn-full" id="btn-process-ocr" hidden>
+          پردازش فاکتور
+        </button>
+
+        <div class="paste-section">
+          <p class="hint">یا اگه از قابلیت کپی متن گوشی استفاده کردی، اینجا پیست کن 👇</p>
+          <textarea id="paste-text-input" class="search-box" rows="7" placeholder="متن فاکتور رو اینجا Paste کن…"></textarea>
+          <button class="btn btn-secondary btn-full" id="btn-process-paste">📋 پردازش متن چسبانده‌شده</button>
+        </div>
+      </div>
+
+      <!-- مرحله ۲: بررسی و ویرایش -->
+      <div id="capture-step-review" class="capture-step" hidden>
+
+        <div id="review-photo-wrap" class="review-photo-wrap" hidden>
+          <img id="review-photo-img" class="review-photo-img" alt="عکس فاکتور" />
+        </div>
+
+        <div class="form-row">
+          <label>تاریخ خرید</label>
+          <input type="date" id="invoice-date-input" />
+        </div>
+        <div class="form-row">
+          <label>نام فروشنده (اختیاری)</label>
+          <input type="text" id="invoice-supplier-input" placeholder="مثلاً پلاستیک فروشی احمدی" />
+        </div>
+
+        <p class="hint">اطلاعات زیر رو قبل از ذخیره چک و اصلاح کن 👇</p>
+
+        <div id="items-table"></div>
+
+        <button class="btn btn-secondary btn-full" id="btn-add-row">+ افزودن ردیف</button>
+
+        <div class="form-row">
+          <label>مبلغ کل فاکتور کاغذی (اختیاری — برای چک صحت جمع)</label>
+          <input type="number" inputmode="decimal" id="invoice-expected-total-input" placeholder="مثلاً 3987000" />
+        </div>
+        <p id="total-check-badge" class="total-check-badge" hidden></p>
+
+        <div class="total-bar">
+          <span>جمع کل</span>
+          <strong id="items-total">۰ تومان</strong>
+        </div>
+
+        <button class="btn btn-primary btn-full btn-large" id="btn-save-invoice">
+          ✅ تایید و ذخیره
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= جستجوی کالا ================= -->
+  <section class="page" id="page-search" data-page="search" hidden>
+    <header class="page-header">
+      <button class="back-btn" data-nav="home">→</button>
+      <h2>جستجوی کالا</h2>
+    </header>
+
+    <div class="page-body">
+      <input type="search" id="search-input" class="search-box" placeholder="مثلاً چسب ۵ سانتی…" autocomplete="off" />
+      <div id="search-results" class="search-results"></div>
+    </div>
+  </section>
+
+  <!-- ================= کالاهای ثبت‌شده ================= -->
+  <section class="page" id="page-products" data-page="products" hidden>
+    <header class="page-header">
+      <button class="back-btn" data-nav="home">→</button>
+      <h2>کالاهای ثبت‌شده</h2>
+    </header>
+
+    <div class="page-body">
+      <input type="search" id="products-filter-input" class="search-box" placeholder="فیلتر بر اساس نام…" autocomplete="off" />
+      <div class="sort-row">
+        <span>مرتب‌سازی:</span>
+        <select id="products-sort-select">
+          <option value="name">نام</option>
+          <option value="date">آخرین خرید</option>
+          <option value="price">آخرین قیمت</option>
+        </select>
+        <button class="btn-select-toggle" id="btn-toggle-select-mode" type="button">✔️ انتخاب</button>
+      </div>
+
+      <div id="products-selection-bar" class="selection-bar" hidden>
+        <button class="btn btn-secondary" id="btn-select-all-products" type="button">انتخاب همه</button>
+        <button class="btn btn-danger" id="btn-delete-selected-products" type="button">🗑 حذف (<span id="selected-products-count">0</span>)</button>
+      </div>
+
+      <div id="products-list" class="product-list"></div>
+    </div>
+  </section>
+
+  <!-- ================= فاکتورهای قبلی ================= -->
+  <section class="page" id="page-invoices" data-page="invoices" hidden>
+    <header class="page-header">
+      <button class="back-btn" data-nav="home">→</button>
+      <h2>فاکتورهای قبلی</h2>
+    </header>
+
+    <div class="page-body">
+      <div id="invoices-list" class="invoice-list"></div>
+    </div>
+  </section>
+
+  <!-- ================= جزئیات یک فاکتور (مودال) ================= -->
+  <div id="invoice-detail-modal" class="modal" hidden>
+    <div class="modal-content">
+      <button class="modal-close" id="btn-close-invoice-modal">✕</button>
+      <div id="invoice-detail-body"></div>
+    </div>
+  </div>
+
+  <!-- ================= جزئیات یک کالا (مودال) ================= -->
+  <div id="product-detail-modal" class="modal" hidden>
+    <div class="modal-content">
+      <button class="modal-close" id="btn-close-product-modal">✕</button>
+      <div id="product-detail-body"></div>
+    </div>
+  </div>
+
+  <!-- ================= زوم تمام‌صفحه عکس فاکتور ================= -->
+  <div id="photo-zoom-modal" class="photo-zoom-modal" hidden>
+    <button class="modal-close" id="btn-close-photo-zoom">✕</button>
+    <div id="photo-zoom-viewport" class="photo-zoom-viewport">
+      <img id="photo-zoom-img" class="photo-zoom-img" alt="عکس فاکتور بزرگ‌شده" />
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <div id="loading-overlay" class="loading-overlay" hidden>
+    <div class="spinner"></div>
+    <p id="loading-text">در حال پردازش…</p>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/search.js" defer></script>
+<script src="js/db.js" defer></script>
+<script src="js/ocr.js" defer></script>
+<script src="js/app.js" defer></script>
+</body>
+</html>

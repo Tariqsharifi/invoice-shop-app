@@ -583,6 +583,7 @@ const InvoicesPage = {
       }
       box.innerHTML = invoices.map((inv) => `
         <div class="invoice-card" data-invoice-id="${inv.id}">
+          <button class="icon-btn icon-btn-danger invoice-card-delete" data-delete-invoice="${inv.id}" type="button" aria-label="حذف فاکتور">🗑</button>
           <div class="invoice-card-thumb-wrap" data-thumb="${inv.id}"></div>
           <div class="invoice-card-info">
             <div class="i-date">${formatDateFa(inv.invoice_date)}</div>
@@ -597,6 +598,25 @@ const InvoicesPage = {
 
       $$(".invoice-card", box).forEach((card) => {
         card.addEventListener("click", () => InvoiceDetail.open(card.dataset.invoiceId));
+      });
+
+      $$("[data-delete-invoice]", box).forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const invoiceId = btn.dataset.deleteInvoice;
+          if (!confirm("مطمئنی می‌خوای این فاکتور حذف بشه؟ این کار قابل بازگشت نیست.")) return;
+          setLoading(true, "در حال حذف…");
+          try {
+            await DB.deleteInvoice(invoiceId);
+            showToast("فاکتور حذف شد", "success");
+            InvoicesPage.onEnter();
+          } catch (err) {
+            console.error(err);
+            showToast("خطا در حذف فاکتور", "error");
+          } finally {
+            setLoading(false);
+          }
+        });
       });
 
       for (const inv of invoices) {

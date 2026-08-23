@@ -802,3 +802,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+.invoice-card-delete {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+}

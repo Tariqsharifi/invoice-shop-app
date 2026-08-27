@@ -707,6 +707,7 @@ const InvoicesPage = {
 
 // ---------------------------------------------------------------------
 // جزئیات یک فاکتور — با امکان ویرایش/حذف تک‌تک اقلام داخلش
+// و ویرایش نام فروشنده
 // ---------------------------------------------------------------------
 const InvoiceDetail = {
   currentItems: [],
@@ -730,7 +731,10 @@ const InvoiceDetail = {
       body.innerHTML = `
         ${imgHtml}
         <h2>${formatDateFa(invoice.invoice_date)}</h2>
-        <p class="hint">${invoice.supplier_name ? escapeHtml(invoice.supplier_name) : "بدون نام فروشنده"}</p>
+        <p class="hint" id="invoice-supplier-line">
+          <span id="invoice-supplier-text">${invoice.supplier_name ? escapeHtml(invoice.supplier_name) : "بدون نام فروشنده"}</span>
+          <button class="icon-btn" id="btn-edit-supplier" type="button" aria-label="ویرایش نام فروشنده">✏️</button>
+        </p>
         <div class="history-list" id="invoice-items-list">
           ${items.length ? items.map((it) => this.renderItemRow(it)).join("") : `<div class="empty-state">دیگه قلمی تو این فاکتور نیست</div>`}
         </div>
@@ -742,6 +746,10 @@ const InvoiceDetail = {
       `;
 
       this.attachItemHandlers(invoiceId);
+
+      $("#btn-edit-supplier").addEventListener("click", () => {
+        this.editSupplier(invoiceId, invoice.supplier_name || "");
+      });
 
       $("#btn-delete-invoice").addEventListener("click", async () => {
         if (!confirm("مطمئنی می‌خوای این فاکتور حذف بشه؟ این کار قابل بازگشت نیست.")) return;
@@ -843,6 +851,40 @@ const InvoiceDetail = {
     } catch (err) {
       console.error(err);
       showToast("خطا در حذف", "error");
+    } finally {
+      setLoading(false);
+    }
+  },
+
+  editSupplier(invoiceId, currentName) {
+    const line = $("#invoice-supplier-line");
+    if (!line) return;
+    line.innerHTML = `
+      <span class="supplier-edit-form">
+        <input type="text" id="edit-supplier-input" value="${escapeHtml(currentName)}" placeholder="نام فروشنده" />
+        <button class="btn btn-primary" id="btn-save-supplier" type="button">ذخیره</button>
+        <button class="btn btn-secondary" id="btn-cancel-supplier" type="button">انصراف</button>
+      </span>
+    `;
+    $("#btn-save-supplier").addEventListener("click", () => this.saveSupplier(invoiceId));
+    $("#btn-cancel-supplier").addEventListener("click", () => this.open(invoiceId));
+    $("#edit-supplier-input").focus();
+  },
+
+  async saveSupplier(invoiceId) {
+    const input = $("#edit-supplier-input");
+    if (!input) return;
+    const name = input.value.trim();
+
+    setLoading(true, "در حال ذخیره…");
+    try {
+      await DB.updateInvoiceSupplier(invoiceId, name);
+      showToast("نام فروشنده ویرایش شد ✅", "success");
+      await this.open(invoiceId);
+      InvoicesPage.onEnter();
+    } catch (err) {
+      console.error(err);
+      showToast("خطا در ذخیره", "error");
     } finally {
       setLoading(false);
     }

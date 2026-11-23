@@ -210,7 +210,7 @@ const CapturePage = {
         file = await PdfImport.toImageFile(file);
       } catch (err) {
         console.error(err);
-        showToast("خطا در خواندن PDF", "error");
+              showToast("PDF: " + (err?.message || err), "error");
         return;
       } finally {
         setLoading(false);

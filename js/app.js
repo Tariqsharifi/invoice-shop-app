@@ -210,7 +210,8 @@ const CapturePage = {
           if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
       setLoading(true, "در حال تبدیل PDF…");
       try {
-        file = await PdfImport.toImageFile(file);
+              this.pdfPages = await PdfImport.toImageFiles(file, (i, n) => setLoading(true, `تبدیل صفحه ${i} از ${n}…`));
+        file = this.pdfPages[0];
       } catch (err) {
         console.error(err);
               showToast("PDF: " + (err?.message || err), "error");

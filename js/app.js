@@ -185,6 +185,7 @@ const CapturePage = {
 
   reset() {
     this.selectedFile = null;
+        this.pdfPages = [];
     this.rows = [];
     $("#invoice-preview-img").hidden = true;
     $("#photo-placeholder").hidden = false;

@@ -206,6 +206,7 @@ const CapturePage = {
     async onFileChosen(e) {
         let file = e.target.files?.[0];
     if (!file) return;
+          this.pdfPages = [];
           if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
       setLoading(true, "در حال تبدیل PDF…");
       try {

@@ -161,6 +161,7 @@ document.addEventListener("click", (e) => {
 // ---------------------------------------------------------------------
 const CapturePage = {
   selectedFile: null,
+    pdfPages: [],
   rows: [],
 
   init() {

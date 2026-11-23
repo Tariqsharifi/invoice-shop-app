@@ -257,6 +257,20 @@ const CapturePage = {
     }
   },
 
+    async extractAll() {
+    const pages = this.pdfPages.length > 1 ? this.pdfPages : [this.selectedFile];
+    if (pages.length === 1) return OCR.extractInvoice(pages[0]);
+    const merged = { supplierName: "", invoiceDate: "", rows: [] };
+    for (let i = 0; i < pages.length; i++) {
+      setLoading(true, `خواندن صفحه ${i + 1} از ${pages.length}…`);
+      const r = await OCR.extractInvoice(pages[i]);
+      merged.rows.push(...r.rows.filter((x) => x.name.trim()));
+      if (!merged.supplierName && r.supplierName) merged.supplierName = r.supplierName;
+      if (!merged.invoiceDate && r.invoiceDate) merged.invoiceDate = r.invoiceDate;
+    }
+    return merged;
+  },
+
   processPastedText() {
     const text = $("#paste-text-input").value;
     if (!text.trim()) {

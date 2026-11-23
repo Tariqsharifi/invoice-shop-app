@@ -201,9 +201,21 @@ const CapturePage = {
     $("#total-check-badge").hidden = true;
   },
 
-  onFileChosen(e) {
-    const file = e.target.files?.[0];
+    async onFileChosen(e) {
+        let file = e.target.files?.[0];
     if (!file) return;
+          if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+      setLoading(true, "در حال تبدیل PDF…");
+      try {
+        file = await PdfImport.toImageFile(file);
+      } catch (err) {
+        console.error(err);
+        showToast("خطا در خواندن PDF", "error");
+        return;
+      } finally {
+        setLoading(false);
+      }
+    }
     this.selectedFile = file;
     const url = URL.createObjectURL(file);
     const img = $("#invoice-preview-img");

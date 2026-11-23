@@ -234,7 +234,7 @@ const CapturePage = {
     if (!this.selectedFile) return;
     setLoading(true, "در حال خواندن فاکتور…");
     try {
-      const result = await OCR.extractInvoice(this.selectedFile);
+          const result = await this.extractAll();
       this.rows = result.rows.length
         ? result.rows
         : [{ name: "", quantity: 1, unitPrice: 0, totalPrice: 0 }];

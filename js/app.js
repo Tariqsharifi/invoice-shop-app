@@ -264,7 +264,13 @@ const CapturePage = {
           const counts = [];
     for (let i = 0; i < pages.length; i++) {
       setLoading(true, `خواندن صفحه ${i + 1} از ${pages.length}…`);
-      const r = await OCR.extractInvoice(pages[i]);
+          let r = await OCR.extractInvoice(pages[i]);
+      for (let t = 0; t < 2 && !r.rows.some((x) => x.name.trim()); t++) {
+        setLoading(true, `تلاش دوباره صفحه ${i + 1}…`);
+        await new Promise((res) => setTimeout(res, 2000));
+        r = await OCR.extractInvoice(pages[i]);
+      }
+      counts.push(r.rows.filter((x) => x.name.trim()).length);
       merged.rows.push(...r.rows.filter((x) => x.name.trim()));
       if (!merged.supplierName && r.supplierName) merged.supplierName = r.supplierName;
       if (!merged.invoiceDate && r.invoiceDate) merged.invoiceDate = r.invoiceDate;

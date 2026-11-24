@@ -275,7 +275,7 @@ const CapturePage = {
       if (!merged.supplierName && r.supplierName) merged.supplierName = r.supplierName;
       if (!merged.invoiceDate && r.invoiceDate) merged.invoiceDate = r.invoiceDate;
     }
-          alert("ردیف هر صفحه: " + counts.join(" - "));
+        alert(counts.join("\n"));
     return merged;
   },
 

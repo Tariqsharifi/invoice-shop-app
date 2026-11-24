@@ -270,7 +270,7 @@ const CapturePage = {
         await new Promise((res) => setTimeout(res, 2000));
         r = await OCR.extractInvoice(pages[i]);
       }
-      counts.push(r.rows.filter((x) => x.name.trim()).length);
+        counts.push((i + 1) + ": " + r.rows.filter((x) => x.name.trim()).length + (OCR.lastError ? " ❌ " + OCR.lastError : ""));
       merged.rows.push(...r.rows.filter((x) => x.name.trim()));
       if (!merged.supplierName && r.supplierName) merged.supplierName = r.supplierName;
       if (!merged.invoiceDate && r.invoiceDate) merged.invoiceDate = r.invoiceDate;

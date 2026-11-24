@@ -261,6 +261,7 @@ const CapturePage = {
     const pages = this.pdfPages.length > 1 ? this.pdfPages : [this.selectedFile];
     if (pages.length === 1) return OCR.extractInvoice(pages[0]);
     const merged = { supplierName: "", invoiceDate: "", rows: [] };
+          const counts = [];
     for (let i = 0; i < pages.length; i++) {
       setLoading(true, `خواندن صفحه ${i + 1} از ${pages.length}…`);
       const r = await OCR.extractInvoice(pages[i]);

@@ -20,6 +20,12 @@ const OCR = {
       return this._normalizeOcrResponse(data);
     } catch (err) {
       console.warn("OCR ناموفق بود، حالت ورود دستی فعال شد:", err);
+            try {
+        const body = await err.context.text();
+        this.lastError = (err.context.status || "") + " " + body.slice(0, 120);
+      } catch {
+        this.lastError = String(err?.message || err).slice(0, 120);
+      }
       return this._manualFallback();
     }
   },

@@ -263,6 +263,7 @@ const CapturePage = {
     const merged = { supplierName: "", invoiceDate: "", rows: [] };
           const counts = [];
     for (let i = 0; i < pages.length; i++) {
+            if (i > 0) await new Promise((res) => setTimeout(res, 7000));
       setLoading(true, `خواندن صفحه ${i + 1} از ${pages.length}…`);
           let r = await OCR.extractInvoice(pages[i]);
       for (let t = 0; t < 2 && !r.rows.some((x) => x.name.trim()); t++) {

@@ -268,7 +268,7 @@ const CapturePage = {
           let r = await OCR.extractInvoice(pages[i]);
       for (let t = 0; t < 2 && !r.rows.some((x) => x.name.trim()); t++) {
         setLoading(true, `تلاش دوباره صفحه ${i + 1}…`);
-        await new Promise((res) => setTimeout(res, 2000));
+            await new Promise((res) => setTimeout(res, 20000));
         r = await OCR.extractInvoice(pages[i]);
       }
         counts.push((i + 1) + ": " + r.rows.filter((x) => x.name.trim()).length + (OCR.lastError ? " ❌ " + OCR.lastError : ""));

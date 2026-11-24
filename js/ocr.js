@@ -4,6 +4,7 @@
 
 const OCR = {
   async extractInvoice(file) {
+        this.lastError = "";
     if (window.APP_CONFIG.OCR_MANUAL_FALLBACK) {
       return this._manualFallback();
     }
